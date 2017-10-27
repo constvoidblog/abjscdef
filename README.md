@@ -50,10 +50,12 @@ Insert a CD and convert to FLAC w/full range of metadata tagging.
 TBD
 
 ## Ubunutu (Development)
-```$ sudo apt-get install cdparanoia flac cdtool icedax nodejs
+```
+$ sudo apt-get install cdparanoia flac cdtool icedax nodejs
 $ git clone https://github.com/constvoidblog/abjscdef
 $ cd abjscdef
-$ npm install```
+$ npm install
+```
 
 ## OSX (Development)
 TBD
@@ -63,5 +65,7 @@ TBD
 
 # Execute
 <insert audio cd>
-```$ node abjscdef
-$ node abjscdef --help```
+```
+$ node abjscdef
+$ node abjscdef --help
+```
