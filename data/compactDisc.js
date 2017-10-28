@@ -20,6 +20,9 @@ class AudioCompactDisc {
         this.asin=null;
         this.mb_release_id=null;
         this.release_date=null;
+        this.has_album_art=false;
+        this.album_art_url=null;
+        this.album_art_path=null;
         this.cd_idx=0;
         this.max_cd_idx=0;
 
@@ -27,7 +30,8 @@ class AudioCompactDisc {
             all_releases: null,
             release: null,
             artist: null,
-            media: null
+            media: null,
+            artwork: null
         };
     }
 

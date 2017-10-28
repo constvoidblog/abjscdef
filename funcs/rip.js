@@ -11,6 +11,7 @@ class CompactDiscRip {
         this.cd=cd;
         this.first_rip=true;
         this.can_transcode=false;
+        this.can_tag=false;
         this.rip_path=path.join(o.path_temp_dir,cd.discid_cdindex);
         this.log={
             log: __log.cdrip,
@@ -30,6 +31,10 @@ class CompactDiscRip {
                 } 
             })
             .catch((err)=>{ this.log.err(err);});
+    }
+
+    activate_tagging(cd) {
+        this.transcoder.activate_tagging(cd);       
     }
 
     mk_tmp_dir() {
@@ -70,7 +75,7 @@ class CompactDiscRip {
                 this.log.log(`saving state regarding track ${rip_status.start_track} ripping.`);
                 this.rip_state.complete(rip_status.start_track); 
                 if (this.can_transcode) {                
-                    this.transcoder.transcode(rip_status.start_track,track_output); 
+                    this.transcoder.process_track(rip_status.start_track,track_output); 
                 }                              
                 this.rip_next_track();
                 
@@ -90,7 +95,7 @@ class CompactDiscRip {
         if (next_track>1) {
             var last_encoding=next_track-1;                
             this.log.log(`check for unencoded ripped wavs, track 1 - ${last_encoding}`);                
-            this.transcoder.transcode_history(last_encoding);
+            this.transcoder.process_history(last_encoding);
         }
     }
 

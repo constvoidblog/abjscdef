@@ -64,7 +64,7 @@ TBD
 TBD
 
 # Execute
-<insert audio cd>
+\<insert audio cd\>
 ```
 $ node abjscdef
 $ node abjscdef --help

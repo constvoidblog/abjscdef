@@ -18,6 +18,11 @@ global.__argv=require('yargs')
             describe: 'Skip metadata gathering',
             type: 'boolean'    
         },
+        'skip_tag' : {
+            group: 'Skip options:',
+            describe: 'Skip metadata tagging',
+            type: 'boolean'
+        },
         'retry_all': {
             group: 'Retry options:',
             describe: 'Retry everything',
@@ -36,6 +41,11 @@ global.__argv=require('yargs')
         'retry_metadata_gather': {
             group: 'Retry options:',
             describe: 'Retry metadata gathering',
+            type: 'boolean'
+        },
+        'retry_tag' :{
+            group: 'Retry options:',
+            describe: 'Retry metadata tagging',
             type: 'boolean'
         }
 
@@ -74,23 +84,23 @@ function process_cd() {
             o.get_cd_txt(log)
                 .then((cd)=> {
                     if (cd.cd_text_flag) {
-                        log.log('Disc has CD text');
+                        log.log('disc has CD text');
                     }
                     else {
-                        log.log('No cd text found');
+                        log.log('no cd text found');
                     }
-                    log.log(`Ripping '${cd.album}' by ${cd.artist}...`);
+                    log.log(`start processing '${cd.album}' by ${cd.artist}...`);
                     start_cd_rip(cd);
                     lookup_metadata(cd);
                 })
                 .catch((err)=>{
-                    log.err('Couldnt read cd toc');
+                    log.err('couldnt read cd toc');
                     log.err(err);
                 });
         })
         .catch((err)=>{
             log.err(err);
-            log.log('No cd, ejecting');
+            log.log('no cd, ejecting');
             //console.log(err);
             o.eject_cd()
                 .then((ok)=>{ log.log('cd ejected - now wait for cd?');})
@@ -119,7 +129,7 @@ function start_cd_rip(cd) {
     ripper.init()
         .then((ok)=>{
             if (!__argv.skip_rip) {   
-                __log.cdrip('starting..')    
+                __log.cdrip('start disc rip..')    
                 ripper.process_rip();
             }
             else {

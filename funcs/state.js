@@ -17,7 +17,7 @@ class StateStatus {
                 if(err) {
                     if (err.code=='ENOENT') {
                         //otherwise, default 
-                        this.log.log(`No ${this.state_basename}, initialize...`);
+                        this.log.log(`no ${this.state_basename}, initialize...`);
                                          
                         for (let idx=1; idx<this.num_states; idx++) {
                             var state = { state_status: 'unstarted' };
@@ -31,7 +31,7 @@ class StateStatus {
                     }
                 }
                 else {
-                    this.log.log(`Load from ${this.state_basename}...`);
+                    this.log.log(`load from ${this.state_basename}...`);
                     this.states=JSON.parse(data);
                     resolve(true);
                 }
@@ -58,14 +58,14 @@ class StateStatus {
         this.states[idx].state_status='started';
         this.store()
             .then((ok)=>{})
-            .catch((err)=>{this.log.err(`Could not save ${this.state_file}.`); this.log.err(err); });   
+            .catch((err)=>{this.log.err(`could not save ${this.state_file}.`); this.log.err(err); });   
     }
 
     complete(idx) {
         this.states[idx].state_status='completed';
         this.store()
             .then((ok)=>{})
-            .catch((err)=>{this.log.err(`Could not save ${this.state_file}.`); this.log.err(err); });   
+            .catch((err)=>{this.log.err(`could not save ${this.state_file}.`); this.log.err(err); });   
      
     }
 

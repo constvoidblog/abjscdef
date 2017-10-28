@@ -14,6 +14,7 @@ class UnixOptions extends BaseOptions {
         this.cmd_get_cd_data=new ExecUnixCommand('icedax');
         this.cmd_cd_ripper=new ExecUnixCommand('cdparanoia');
         this.cmd_transcode_flac=new ExecUnixCommand('flac');
+        this.cmd_tag_flac=new ExecUnixCommand('metaflac');
 
         this.path_cdrom='/dev/cdrom';
         this.path_temp_dir=path.join(os.homedir(),'.abjscdef');
@@ -234,6 +235,13 @@ class UnixOptions extends BaseOptions {
             });
         });     
     }
+
+    tag_flac(log,cfg,track_num,input) { 
+        //generate tmp tag file
+        var album_art_path="";
+        this.cmd_tag_flac.exec(log,[album_art_path,`--import-tags-from=${ok}`,input], (code,stdout,stderr)=>{});
+    }
+    
 
 }
 

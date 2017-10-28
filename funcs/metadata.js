@@ -1,7 +1,9 @@
 const axios = require('axios');
 const leven = require('leven');
 const fs=require('fs');
+const url=require('url');
 const path=require('path');
+const img_dl=require('image-downloader');
 
 const { StateStatus } = require(__app+'funcs/state');
 
@@ -12,11 +14,13 @@ class Metadata {
         this.rip_path=ripper.rip_path;
         this.cd_state=path.join(this.rip_path,'cd.json');
         this.STATE_CD_METADATA=1;
+        this.STATE_CD_ALBUM_ART_ID=2;
+        this.STATE_CD_ALBUM_ART_DL=3;
         this.ready=false;
         this.log = {
             log: __log.metadata,
             err: __log.metadata_err
-        }
+        };
         
     }
 
@@ -33,7 +37,7 @@ class Metadata {
             this.remove_if_exists(this.cd_state);
             this.remove_if_exists(path.join(this.rip_path,'metadata_state.json'));
         }
-        this.metadata_state=new StateStatus(this.log,2,this.rip_path,'metadata_state.json');        
+        this.metadata_state=new StateStatus(this.log,4,this.rip_path,'metadata_state.json');        
         return this.metadata_state.init_state();
     }
 
@@ -52,6 +56,7 @@ class Metadata {
                         .then((response)=>{
                             this.metadata_state.complete(this.STATE_CD_METADATA);
                             this.ready=true;
+                            this.get_album_art();
                             this.activate_transcoding(this.cd);
                         })
                         .catch((err)=>{ this.log.err(err);});
@@ -63,10 +68,85 @@ class Metadata {
             this.load(this.cd_state)
                 .then(response=>{
                     this.log.log('restored cd metadata');
-                    this.log.log(`${this.cd.artist} - ${this.cd.album}`);
-                    this.activate_transcoding(this.cd);
+                    this.log.log(`restored cd: ${this.cd.artist} - ${this.cd.album}`);
+                    this.get_album_art();  
+                    this.activate_transcoding(this.cd);                  
                 })
                 .catch((err)=>{ this.log.err(err);});
+        }
+    }
+
+    get_album_art() {
+        if (this.metadata_state.is_incomplete(this.STATE_CD_ALBUM_ART_ID)) {
+            //Need to try getting album art
+            this.log.log('get album art');
+            this.metadata_state.start(this.STATE_CD_ALBUM_ART_ID);   
+            axios.get(`https://coverartarchive.org/release/${this.cd.mb_release_id}`)
+                .then((response)=>{
+                    this.cd.metadata.artwork=response.data;
+                    this.process_coverart_images(response.data.images);
+                })
+                .catch((err)=>{
+                    this.log.err('failed to retrieve album art from coverartarchive.org.');
+                    this.log.err(err);
+                });
+        }     
+        else {
+            this.log.log('already found album art.');
+            this.download_album_art();            
+        }          
+    }
+
+    process_coverart_images(images) {
+        images.forEach((img)=>{
+            if ((img.front) && (!this.cd.has_album_art)) {
+                this.log.log('found front art');
+                this.cd.album_art_url=img.thumbnails.large;
+                this.log.log(this.cd.album_art_url);
+
+                //url img extension
+                let img_type=path.extname(url.parse(this.cd.album_art_url).pathname);
+                this.cd.album_art_path=path.join(this.rip_path,`album_art${img_type}`);
+                this.cd.has_album_art=true;
+                
+                this.metadata_state.complete(this.STATE_CD_ALBUM_ART_ID);
+                this.download_album_art();
+
+            }
+        });
+
+    }
+
+    download_album_art() {
+        if (this.metadata_state.is_incomplete(this.STATE_CD_ALBUM_ART_DL)) {
+            this.metadata_state.start(this.STATE_CD_ALBUM_ART_DL);   
+            this.log.log(`download ${this.cd_album_art_url}...`);
+            let img_dl_opt={
+                url:    this.cd.album_art_url,
+                dest:  this.cd.album_art_path
+            };
+
+            img_dl.image(img_dl_opt)
+                .then(({filename,image})=>{
+                    this.log.log(`downloaded album art to ${filename}`);
+                    this.metadata_state.complete(this.STATE_CD_ALBUM_ART_DL); 
+                    this.store_cd(this.cd_state)
+                        .then((response)=>{
+                            this.ripper.activate_tagging(this.cd);
+                        })
+                        .catch((err)=>{
+                            this.log.err('couldnt stash cd');
+                            this.log.err(err);
+                        });
+                })
+                .catch((err)=>{ 
+                    this.log.err('failed to download album art');
+                    this.log.err(err);
+                });
+        }
+        else {
+            this.log.log('already downloaded album art.');
+            this.ripper.activate_tagging(this.cd);
         }
     }
 
@@ -256,7 +336,7 @@ class Metadata {
                     //Match Artist
                     var found_artist=false;
                     r['artist-credit'].forEach((artist) => {
-                        this.log.log(`${artist.name} = ${this.cd.artist}?`)
+                        this.log.log(`${artist.name} = ${this.cd.artist}?`);
                         if ( (!found_artist) &&(artist.name.toLowerCase()==this.cd.artist.toLowerCase())) {
                             found_artist=true;
                             this.score+=GREAT_MATCH;

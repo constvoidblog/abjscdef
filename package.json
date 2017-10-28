@@ -12,10 +12,12 @@
     "eslint-config-google": "^0.9.1"
   },
   "dependencies": {
-    "winston": "^2.4.0",
-    "leven":  "^2.1.0",
-    "axios":  "^0.16.2",
+    "axios": "^0.16.2",
+    "image-downloader": "^3.3.0",
+    "leven": "^2.1.0",
     "mkdirp": "^0.5.1",
-    "yargs":  "^9.0.1"
+    "temp": "^0.8.3",
+    "winston": "^2.4.0",
+    "yargs": "^9.0.1"
   }
 }
