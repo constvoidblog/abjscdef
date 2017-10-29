@@ -1,13 +1,13 @@
 {
   "name": "abjscdef",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "description": "A better javascript cd encoder - flac",
   "main": "abjscdef.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "const void*",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "eslint-config-google": "^0.9.1",
     "jshint": "^2.9.5"

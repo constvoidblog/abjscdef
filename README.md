@@ -13,14 +13,28 @@ Insert a CD and convert to FLAC w/full range of metadata tagging.
 ### Current State
 * Cd Ripping: Functioning
 * Metadata Gathering:  
-    * Functioning: Album/Artist/Track/Year Functioning
-    * Unstarted: Album Artwork
+    * Functioning: Album/Artist/Track/Year Functioning/Album Artwork
     * Unresolved: Genre     
 * Transcoding: Functioning
-* Tagging: Unstarted
+* Tagging: Functioning
+* Stashing: Unstarted
+    * todo 
+        * ftp to NAS
 * Clean-up: Unstarted
+    * todo options:
+        * default: remove-wav, compress, archive
+        * deep-clean: purge
+        * remove-wav: remove src wav files
+        * compress: compress cache dir
+        * archive: move cache dir to an archive location (~/.abjscdef/completed/)
+            * *potentially* use to identify if a cd has been ripped already, would need --ignore_archive option    
 * User configuration: Unstarted
-* Backlog transcoding & tagging: Unstarted
+    * todo: expose configuration as code--citizen developery! put in convenient home dir spot.
+* Backlog transcoding & tagging: started
+    * framework in place: If any tracks have been ripped already, then those ripped tracks are a backlog...see if they need transcoding, tagging, etc. This feature will activate automatically.
+    * unstarted: Once cleanup is functioning:  are there albums outside of the current album that have work left? This feature will need a command line param to avoid recycling a toxic rip->transcode into the current rip->transcode process. Post v1
+* Multiple transcoders
+    * Post v1
 
 ### Version Definition:
 * Alpha: Unstarted capability
@@ -57,6 +71,25 @@ $ cd abjscdef
 $ npm install
 ```
 
+### linux libs
+* **cdtool** - for figuring out if a cd is in the drive. yeah, I know.
+* **icedax** - for reading cd text...because cdparanoia can't.
+* **cdparanoia** - cdripper...I suppose icedax has paranoia options...
+* **nodejs** - the glue that holds it all together! >6.11
+
+### npm lib dependencies
+* **axios** - web service middleware
+* **image-downloader** - cover art download helper
+* **leven** - fuzzy text matcher (used when weiging multiple metadata options)
+* **mkdirp** - deep directory creation (local)
+* **wiston** - logger
+* **yargs** - cmd line param helper
+
+
+### npm dev lib dependencies
+* **esint** - auto correct fmt
+* **jshint** - improve code
+ 
 ## OSX (Development)
 TBD
 
