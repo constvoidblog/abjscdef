@@ -7,21 +7,38 @@ const img_dl=require('image-downloader');
 
 const { StateStatus } = require(__app+'funcs/state');
 
+var metadata_logger= {
+    log: __log.metadata,
+    err: __log.metadata_err
+};
+
+module.exports.lookup_metadata=function (o) {
+    var album_metadata=new Metadata(o);
+    album_metadata.init()
+        .then((response)=>{
+            //console.log(__argv);
+            if (!o.argv.skip_metadata) {
+                //Get metadata
+                album_metadata.log.log('starting...');
+                album_metadata.get_album_metadata();
+            } 
+            else {
+                album_metadata.log.log('skipping...');
+            }
+        });
+}
 class Metadata {
-    constructor(cd,ripper) {
-        this.cd=cd;
-        this.ripper=ripper;
-        this.rip_path=ripper.rip_path;
+    constructor(o) {
+        this.cd=o.cd;
+        this.o=o;
+        this.ripper=o.ripper;
+        this.rip_path=o.path_rip_cache;
         this.cd_state=path.join(this.rip_path,'cd.json');
         this.STATE_CD_METADATA=1;
         this.STATE_CD_ALBUM_ART_ID=2;
         this.STATE_CD_ALBUM_ART_DL=3;
         this.ready=false;
-        this.log = {
-            log: __log.metadata,
-            err: __log.metadata_err
-        };
-        
+        this.log = metadata_logger;        
     }
 
     remove_if_exists(f) {
@@ -31,7 +48,7 @@ class Metadata {
     }
 
     init() {
-        if (__argv.retry_metadata_gather) {
+        if (this.o.argv.retry_metadata_gather) {
             this.log.log('retry activated!');
             this.log.log('removing state');
             this.remove_if_exists(this.cd_state);
@@ -56,8 +73,8 @@ class Metadata {
                         .then((response)=>{
                             this.metadata_state.complete(this.STATE_CD_METADATA);
                             this.ready=true;
+                            this.o.ripper.activate('transcode',this.cd);                            
                             this.get_album_art();
-                            this.activate_transcoding(this.cd);
                         })
                         .catch((err)=>{ this.log.err(err);});
                     //console.log(response);
@@ -66,11 +83,11 @@ class Metadata {
         }
         else {
             this.load(this.cd_state)
-                .then(response=>{
+                .then((response)=>{
                     this.log.log('restored cd metadata');
                     this.log.log(`restored cd: ${this.cd.artist} - ${this.cd.album}`);
+                    this.o.ripper.activate('transcode',this.cd);                    
                     this.get_album_art();  
-                    this.activate_transcoding(this.cd);                  
                 })
                 .catch((err)=>{ this.log.err(err);});
         }
@@ -132,7 +149,7 @@ class Metadata {
                     this.metadata_state.complete(this.STATE_CD_ALBUM_ART_DL); 
                     this.store_cd(this.cd_state)
                         .then((response)=>{
-                            this.ripper.activate_tagging(this.cd);
+                            this.o.ripper.activate('tag',this.cd);
                         })
                         .catch((err)=>{
                             this.log.err('couldnt stash cd');
@@ -146,14 +163,10 @@ class Metadata {
         }
         else {
             this.log.log('already downloaded album art.');
-            this.ripper.activate_tagging(this.cd);
+            this.log.log(`${this.cd.has_album_art}`);
+            this.log.log(`${this.cd.album_art_path}`);            
+            this.o.ripper.activate('tag',this.cd);
         }
-    }
-
-    activate_transcoding(cd) {
-        this.ready=true;
-        this.log.log('activate transcoder');
-        this.ripper.activate_transcoding(cd);
     }
 
     store_cd(state_file) {
@@ -375,5 +388,3 @@ class Metadata {
     }
 
 }
-
-module.exports={Metadata};

@@ -23,7 +23,7 @@ class StateStatus {
                             var state = { state_status: 'unstarted' };
                             this.states[idx]=state;                            
                         }                        
-                        resolve(true);
+                        resolve(this.states);
                     }
                     else {
                         this.log.err(`${this.state_basename} had issue ${err}`);
@@ -31,7 +31,7 @@ class StateStatus {
                     }
                 }
                 else {
-                    this.log.log(`load from ${this.state_basename}...`);
+                    this.log.log(`restored state from ${this.state_basename}...`);
                     this.states=JSON.parse(data);
                     resolve(true);
                 }
@@ -43,7 +43,7 @@ class StateStatus {
     store() {
         return new Promise((resolve,reject)=>{
             var json=JSON.stringify(this.states);
-            this.log.log(`Saving ${this.state_file}`);
+            //this.log.log(`saving ${this.state_file}`); //DBG
             if (fs.existsSync(this.state_file)) {
                 fs.unlinkSync(this.state_file); //very strange error if I don't do this.xx`x`
             }
@@ -79,6 +79,7 @@ class StateStatus {
                 return idx;
             }
         }
+        return 0;
     }
 }
 

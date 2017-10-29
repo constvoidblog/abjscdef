@@ -4,11 +4,12 @@ const path = require ('path');
 const BaseOptions = require(__app+'opts/baseOpts');
 const { ExecUnixCommand } = require(__app+'opts/unix/unixCmds');
 const icedaxParse = require (__app+'opts/unix/icedaxParse');
+const metaflacWrite = require (__app+'opts/unix/metaflacWrite');
 
 
 class UnixOptions extends BaseOptions {
-    constructor () { 
-        super();   
+    constructor (argv) { 
+        super(argv);   
         this.cmd_cd_is_present=new ExecUnixCommand('cdir'); //from cdtools pkg
         this.cmd_cd_eject=new ExecUnixCommand('eject');
         this.cmd_get_cd_data=new ExecUnixCommand('icedax');
@@ -102,91 +103,97 @@ class UnixOptions extends BaseOptions {
         };
 
 
-        return new Promise((resolve,reject)=> {
-            this.cmd_cd_ripper.exec_realtime_io(log,['-we',`${track_idx}`,f],
-                (stdout)=>{},
-                (stderr)=>{ 
+        return new Promise((resolve,reject)=> {            
+            if (this.argv.fake_rip) {
+                log.log('fake rip!');
+                resolve(f);
+            }
+            else {
+                this.cmd_cd_ripper.exec_realtime_io(log,['-we',`${track_idx}`,f],
+                    (stdout)=>{},
+                    (stderr)=>{ 
                     //#define CD_FRAMEWORDS (CD_FRAMESIZE_RAW/2)
                     //CD_FRAMESIZE_RAW 2352
                         
-                    var stderr_lst=stderr.toString().split(/[\r\n]+/);
-                    stderr_lst.forEach((s)=>{
-                        var sector_datum=s.match(/##: (-?\d+) \[(\w+)\] @ (\d+)/);
-                        if (sector_datum==null) {
-                            var sector_start_data=s.match(/Ripping from sector\s+(\d+)\s+\(track\s+(\d+)\s+\[(\d+:\d+\.\d+)\]\)/);                                                       
-                            if (sector_start_data!=null) {
+                        var stderr_lst=stderr.toString().split(/[\r\n]+/);
+                        stderr_lst.forEach((s)=>{
+                            var sector_datum=s.match(/##: (-?\d+) \[(\w+)\] @ (\d+)/);
+                            if (sector_datum==null) {
+                                var sector_start_data=s.match(/Ripping from sector\s+(\d+)\s+\(track\s+(\d+)\s+\[(\d+:\d+\.\d+)\]\)/);                                                       
+                                if (sector_start_data!=null) {
                                 //Ripping from sector   15196 (track  2 [0:00.00])
-                                rip_data.start_sector=parseInt(sector_start_data[1]);
-                                rip_data.start_track=parseInt(sector_start_data[2]);
-                                rip_data.start_time=sector_start_data[3];
-                            }
-                            else {
-                                var sector_end_data=s.match(/\s+to sector\s+(\d+)\s+\(track\s+(\d+)\s+\[(\d+:\d+\.\d+)\]\)/);
-                                if (sector_end_data!=null) {
-                                    rip_data.end_sector=parseInt(sector_end_data[1]);                                    
-                                    rip_data.end_track=parseInt(sector_end_data[2]);
-                                    rip_data.end_time=sector_end_data[3];   
-                                    next_rip_status_sector=rip_data.start_sector+next_rip_status*(rip_data.end_sector-rip_data.start_sector);
-                                    log.log(`Ripping track ${rip_data.start_track} (${rip_data.start_time} - ${rip_data.end_time}) ${rip_data.start_sector} - ${rip_data.end_sector}`);                                                                   
+                                    rip_data.start_sector=parseInt(sector_start_data[1]);
+                                    rip_data.start_track=parseInt(sector_start_data[2]);
+                                    rip_data.start_time=sector_start_data[3];
                                 }
-                                else {   
-                                    if (s.trim()=='Done.') {
-                                        log.log(`Done ripping track ${rip_data.start_track}`);                                        
-                                    } 
-                                    else {
-                                        if (s.trim().length!=0) {
-                                            log.log('e:'+s);                        
-                                        }                           
+                                else {
+                                    var sector_end_data=s.match(/\s+to sector\s+(\d+)\s+\(track\s+(\d+)\s+\[(\d+:\d+\.\d+)\]\)/);
+                                    if (sector_end_data!=null) {
+                                        rip_data.end_sector=parseInt(sector_end_data[1]);                                    
+                                        rip_data.end_track=parseInt(sector_end_data[2]);
+                                        rip_data.end_time=sector_end_data[3];   
+                                        next_rip_status_sector=rip_data.start_sector+next_rip_status*(rip_data.end_sector-rip_data.start_sector);
+                                        log.log(`Ripping track ${rip_data.start_track} (${rip_data.start_time} - ${rip_data.end_time}) ${rip_data.start_sector} - ${rip_data.end_sector}`);                                                                   
+                                    }
+                                    else {   
+                                        if (s.trim()=='Done.') {
+                                            log.log(`Done ripping track ${rip_data.start_track}`);                                        
+                                        } 
+                                        else {
+                                            if (s.trim().length!=0) {
+                                                log.log('e:'+s);                        
+                                            }                           
+                                        }
                                     }
                                 }
                             }
-                        }
-                        else {
+                            else {
                             //##: 0 [read] @ 596232
-                            sector_status.status_code=parseInt(sector_datum[1]);
-                            sector_status.status_str=sector_datum[2];
-                            sector_status.sector=sector_datum[3];
+                                sector_status.status_code=parseInt(sector_datum[1]);
+                                sector_status.status_str=sector_datum[2];
+                                sector_status.sector=sector_datum[3];
                             
-                            cur_sector=sector_status.sector/1176;
-                            //console.log(`${cur_sector} of ${rip_data.end_sector} (next status ${next_rip_status})`);
+                                cur_sector=sector_status.sector/1176;
+                                //console.log(`${cur_sector} of ${rip_data.end_sector} (next status ${next_rip_status})`);
                         
-                            if (cur_sector>next_rip_status_sector) {
-                                log.log(`${next_rip_status*100}%`);
-                                next_rip_status=rip_status_progression[next_rip_status];
-                                next_rip_status_sector=rip_data.start_sector+next_rip_status*(rip_data.end_sector-rip_data.start_sector);                            
-                            }
+                                if (cur_sector>next_rip_status_sector) {
+                                    log.log(`${next_rip_status*100}%`);
+                                    next_rip_status=rip_status_progression[next_rip_status];
+                                    next_rip_status_sector=rip_data.start_sector+next_rip_status*(rip_data.end_sector-rip_data.start_sector);                            
+                                }
 
-                            switch(sector_status.status_code){ 
-                            case 0:
+                                switch(sector_status.status_code){ 
+                                case 0:
                                 //read
-                                break;
-                            case 1:
+                                    break;
+                                case 1:
                                 //verify
-                                break;
-                            case -2:
+                                    break;
+                                case -2:
                                 //write
-                                break;
-                            case 9:
+                                    break;
+                                case 9:
                                 //overlap
                                 //console.log(sector_datum[0]);
-                                break;
-                            default:
+                                    break;
+                                default:
                                 //uhoh!
-                                log.err(sector_status);
-                                break;
-                            }                        
+                                    log.err(sector_status);
+                                    break;
+                                }                        
+                            }
+                        });
+
+                    },
+                    (code,stdout,stderr)=>{
+                        if (code==0) {
+                            resolve(f);
+                        }
+                        else {
+                            reject(code);
                         }
                     });
-
-                },
-                (code,stdout,stderr)=>{
-                    if (code==0) {
-                        resolve(rip_data);
-                    }
-                    else {
-                        reject(code);
-                    }
-                });
+            }
         });  
     }
     
@@ -210,13 +217,13 @@ class UnixOptions extends BaseOptions {
     }
 
 
-    get_track_filename(transcode_cfg,track) {
+    get_track_filename(cd,track_idx,transcode_fmt) {
+        var track=cd.tracks[track_idx];
         var track_str=this.padStart(track.idx.toString(),2,'0');
-        return (`${track_str}. ${track.track_title}.${transcode_cfg.file_extension}`);
+        return (`${track_str}. ${track.track_title}.${transcode_fmt}`);
     }
 
-    transcode_flac(log,transcode_cfg,track_num,input) {
-        var transcode_output=path.join(transcode_cfg.album_path,transcode_cfg.track_files[track_num]);        
+    transcode_flac(log,cd,track_num,input,transcode_output) {
         return new Promise((resolve,reject)=> {
             log.log(`Transcoding ${input} to ${transcode_output}`);
             this.cmd_transcode_flac.exec(log,['-f','-8','-o',transcode_output,input], (code,stdout,stderr) => {                    
@@ -236,10 +243,50 @@ class UnixOptions extends BaseOptions {
         });     
     }
 
-    tag_flac(log,cfg,track_num,input) { 
-        //generate tmp tag file
-        var album_art_path="";
-        this.cmd_tag_flac.exec(log,[album_art_path,`--import-tags-from=${ok}`,input], (code,stdout,stderr)=>{});
+    generate_flac_tag_filename(track_idx) {
+        let tag_file_name=`track_${track_idx}_flac_tags.txt`;
+        let tag_file=path.join(this.path_rip_cache,tag_file_name);   
+        return tag_file;
+    }
+
+    generate_flac_tags(log,cd) {
+        //Is there a way to not regenerate tags each time?
+        return new Promise((resolve,reject)=>{
+            log.log('generate flac metadata files');
+            cd.tracks.forEach((track)=>{
+                if (track!=null) {
+                    metaflacWrite.tag_file(log,this,cd,track)
+                        .catch((err)=>{log.err(err); reject(err)});
+                }
+            });
+            log.log('generated flac metadata files');      
+            resolve(cd);
+        });
+    }
+
+    tag_flac(log,cd,track_num,input) {   
+        return new Promise ((resolve,reject)=>{      
+            var tag_file=this.generate_flac_tag_filename(track_num);
+            var album_art='';
+            
+            if (cd.has_album_art) {
+                album_art=`--import-picture-from="${cd.album_art_path}"`;
+            }
+            var args=`--remove-all-tags ${album_art} --import-tags-from=${tag_file} "${input}"`;
+            
+        
+            this.cmd_tag_flac.shell(log,args, (err,stdout,stderr)=>{                            
+                if (err) {
+                    log.err(`flac tagging had issue ${err.code}`);
+                    log.err(stdout);
+                    log.err(stderr);
+                    reject(err);
+                }
+                else {
+                    resolve(input);
+                }
+            });
+        });
     }
     
 

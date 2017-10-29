@@ -9,7 +9,8 @@
   "author": "const void*",
   "license": "ISC",
   "devDependencies": {
-    "eslint-config-google": "^0.9.1"
+    "eslint-config-google": "^0.9.1",
+    "jshint": "^2.9.5"
   },
   "dependencies": {
     "axios": "^0.16.2",

@@ -1,65 +1,37 @@
-//abjscdef require
-const { CDAudioTrackState }     = require(__app+'funcs/base/cdaudioTrackState');
-const { TranscodeCfgHandler }   = require(__app+'funcs/base/transcodeCfgHandler');
+//abjscdef libs
+const { TrackProcessor } = require(__app+'funcs/base/trackProcessor');
 
-class TagCfg extends CDAudioTrackState {
-    constructor (transcode_fmt,cd,o,rip_path, transcoder) {
-        super(cd,o,rip_path,
-            __argv.retry_tag,
-            `tag_state_${transcode_fmt}.json`,
-            {
-                log: __log.tag,
-                err: __log.tag_err
-            },
-            { 
-                start_desc:     `tagging ${transcode_fmt}`,
-                complete_desc:  `tagged ${transcode_fmt}`
-            });
+var tag_logger =  {
+    log: __log.tag,
+    err: __log.tag_err
+};
 
-        this.transcode_fmt=transcode_fmt;
-        this.transcoder=transcoder;
-    }
-
-    /**
-     * Tag a given track
-     * @public
-     * @param {Number} t - track num 
-     * @param {String} input_file - transcoded file 
-     */
-    operate_on_track(t,input_file) {
-        switch(this.transcode_fmt) {
-        case 'flac':
-            return this.o.tag_flac(this,this.cd,t,input_file);
-        default:
-            this.log.er(`unknown transcode option ${this.transcode_fmt}`);
-            return null;
-        }
-    }
-
-    /**
-     * Return transcoded output file for this transcoding configuration.
-     * @param {Number} t - track number 
-     */
-    get_backget_input_obj(t) {
-        return this.transcoder.transcode_cfgs[this.transcode_fmt].get_transcoded_output(t);                
-    }
+function generate_tag_log_desc(fmt) {
+    return {
+        starting_desc:  `tagging ${fmt}`,
+        completed_desc: `tagged ${fmt}`,
+        backlog_desc: `${fmt} files`
+    };
 }
 
-class Tag extends TranscodeCfgHandler {
-    constructor (o,cd,rip_path) {
-        super(o,cd,rip_path,{
-            log: __log.tag,
-            err: __log.tag_err
-        },
-        {
-            history_desc: 'tag'
+
+
+module.exports.generate_flac_tagger=function(o) {
+    var flac_tagger=new TrackProcessor(o,'tag flac','tag_flac_state.json',tag_logger,generate_tag_log_desc('flac'));
+    flac_tagger=flac_tagger.set_flag('skip',o.argv.skip_tag)
+        .set_flag('retry',o.argv.retry_tag)
+        .set_next_processor(o.flac_done)  //flac_stasher oneday
+        .on('activate','',(cd)=>{            
+            flac_tagger.cd=cd;
+            return o.generate_flac_tags(flac_tagger.log,cd);
+        })
+        .on('process','track',(idx,input)=>{
+            return flac_tagger.o.tag_flac(flac_tagger.log,flac_tagger.cd,idx,input);
+        })
+        .on('done','track',(idx,input,output)=>{
+            //for now...stop processing
+            //todo--add an official "flac done" and single threader object
+            flac_tagger.log.log(`Done processing track ${idx} - ${output}!`);
         });
-    }
-
-    generate_cfg_obj(cfg_fmt) {
-        return new TagCfg(cfg_fmt,this.cd,this.o,this.rip_path);
-    }
-}
-
-
-module.exports={Tag};
+    return flac_tagger;
+};

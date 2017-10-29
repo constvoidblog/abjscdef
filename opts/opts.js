@@ -1,7 +1,6 @@
 const os=require('os');
 
-exports.generate_opts= function() {
-    var options;
+exports.generate_opts= function(argv) {    
     var optionObj;
 
     switch(os.platform()) {
@@ -10,5 +9,5 @@ exports.generate_opts= function() {
         break;
     }
 
-    return new optionObj();
+    return new optionObj(argv);
 }

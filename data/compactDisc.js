@@ -1,6 +1,8 @@
 
 class AudioCompactDisc {
     constructor() {
+        this.album_transcode_path=null;
+        
         this.discid_cdindex=null;
         this.discid_cddb=null;
         this.cd_text_flag=false;

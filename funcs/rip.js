@@ -1,42 +1,54 @@
+//nodeJs libs
 const path=require('path');
-const fs=require('fs');
-const mkdirp=require('mkdirp');
 
-const { StateStatus } = require(__app+'funcs/state');
-const { Transcode } = require(__app+'funcs/transcode');
+//abjscdef libs
+const { TrackProcessor } = require(__app+'funcs/base/trackProcessor');
 
-class CompactDiscRip {
-    constructor (o,cd) {
-        this.o=o;
-        this.cd=cd;
-        this.first_rip=true;
-        this.can_transcode=false;
-        this.can_tag=false;
-        this.rip_path=path.join(o.path_temp_dir,cd.discid_cdindex);
-        this.log={
-            log: __log.cdrip,
-            err: __log.cdrip_err
-        };                          
-    }
+var rip_logger={
+    log: __log.cdrip,
+    err: __log.cdrip_err
+};
 
-    activate_transcoding(cd) {
-        this.log.log('activate transcoding!');
-        this.cd=cd;
-        this.can_transcode=true;
-        this.transcoder=new Transcode(this.o,this.cd,this.rip_path); 
-        this.transcoder.init()
-            .then((ok)=>{            
-                if ((__argv.skip_rip) & (!__argv.skip_transcode)) {
-                    this.transcode_history();
-                } 
-            })
-            .catch((err)=>{ this.log.err(err);});
-    }
+var rip_logger_desc={
+    starting_desc: 'ripping',
+    completed_desc: 'ripped',
+    backlog_desc: 'unripped audio tracks'
+};
 
-    activate_tagging(cd) {
-        this.transcoder.activate_tagging(cd);       
-    }
+module.exports.generate_ripper=function (o) {
+    var ripper=new TrackProcessor(o,'rip','rip_state.json',rip_logger,rip_logger_desc);
+    ripper=ripper.set_flag('skip',o.argv.skip_rip)
+        .set_flag('retry',o.argv.retry_rip)
+        .set_next_processor(o.transcoder)
+        //.on('activate','',(cd)=>{})   //default   
+        .on('start','process',(cd)=>{
+            //rip cd!
+            if (!ripper.skip_flag) {
+                var next_state=ripper.obj_state.get_next_incomplete_state();  
+                if (next_state!=0) {
+                    //not last track
+                    ripper.process_track(next_state,next_state)     //Rip this track
+                        .then((ok)=>{ripper.cb_start_process(cd);}) //Keep ripping!
+                        .catch((err)=>{this.log.err(err);});                        
+                }
+            }
+        })     
+        .on('generate','output-track-file',(idx)=>{                        
+            var track_str=ripper.padStart(idx.toString(),2,'0');            
+            return path.join(ripper.o.path_rip_cache,`track_${track_str}.wav`);
+        })
+        .on('process','track',(idx,input,output)=>{  
+            //ripping input is cd--ignore input param          
+            return ripper.o.rip_track(ripper.log,idx,output)
+        });
 
+    return ripper;
+};
+
+//move to discid
+/**
+ * this.rip_path=path.join(o.path_temp_dir,cd.discid_cdindex);
+ * 
     mk_tmp_dir() {
         return new Promise((resolve,reject)=>{
             mkdirp(this.rip_path,(err)=>{
@@ -45,6 +57,21 @@ class CompactDiscRip {
             });
         });
     }
+ */
+/*
+class CompactDiscRip {
+    constructor (o,cd) {
+        this.o=o;
+        this.cd=cd;
+        this.first_rip=true;
+        this.can_transcode=false;
+        this.can_tag=false;
+        
+        this.log={
+
+        };                          
+    }
+
 
     padStart(s,targetLength,padString) {
         targetLength = targetLength>>0; //floor if number or convert non-number to 0;
@@ -64,11 +91,9 @@ class CompactDiscRip {
     rip_next_track() {
         var next_track=this.rip_state.get_next_incomplete_state();  
         //var last_track =this.rip_state.num_tracks-1;    
-        var track_str=this.padStart(next_track.toString(),2,'0');
-        this.log.log(`ripping track: ${track_str}`);
-        var track_output=path.join(this.rip_path,`track_${track_str}.wav`);
+       
         this.rip_state.start(next_track);
-        this.o.rip_track('cdrip',next_track,track_output)
+       
             .then((rip_status)=> {
                 //all done ripping thist rack!
                
@@ -112,14 +137,14 @@ class CompactDiscRip {
         this.log.log('done transcoding history.');
     }
 
-    /*
-    event designer
-        cd-rip             pre/post
-        track-rip          pre/post
-        track-transcode    pre/post
+    
+    //event designer
+    //    cd-rip             pre/post
+    //    track-rip          pre/post
+    //    track-transcode    pre/post
 
 
-    */
+    
 
     init() {
         return new Promise( (resolve,reject)=>{
@@ -136,4 +161,4 @@ class CompactDiscRip {
     }
 }
 
-module.exports={CompactDiscRip};
+module.exports={CompactDiscRip};*/

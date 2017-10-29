@@ -1,5 +1,6 @@
 const { BaseCommand } = require(__app+'opts/baseCmds');
 const { spawn } = require('child_process');
+const { exec } = require('child_process');
 
 class ExecUnixCommand extends BaseCommand {
     constructor (cmd) {
@@ -10,11 +11,17 @@ class ExecUnixCommand extends BaseCommand {
     exec(log,param_array,callback) {
         var stdout='';
         var stderr='';
-        log.log(`running ${this.cmd} ${param_array}`);
+        
         var c = spawn(this.cmd,param_array);
         c.stdout.on('data',(data)=> { stdout+=data; });
         c.stderr.on('data',(data)=> { stderr+=data; });
         c.on('close',(code)=>{ callback(code, stdout, stderr);});
+    }
+
+    shell(log,param_str,callback){
+        log.log(`running ${this.cmd} ${param_str}`);
+        exec(`${this.cmd} ${param_str}`,callback);
+
     }
 
     exec_realtime_io(log,param_array,process_stdout_cb,process_stderr_cb,close_cb) {
@@ -32,10 +39,5 @@ class ExecUnixCommand extends BaseCommand {
     }
 }
 
-class ExecUnixRippingCommand extends ExecUnixCommand {
-    constructor (cmd) {
-        super(cmd);
-    }
-}
 
 module.exports = { ExecUnixCommand }
