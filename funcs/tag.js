@@ -14,8 +14,6 @@ function generate_tag_log_desc(fmt) {
     };
 }
 
-
-
 module.exports.generate_flac_tagger=function(o) {
     var flac_tagger=new TrackProcessor(o,'tag flac','tag_flac_state.json',tag_logger,generate_tag_log_desc('flac'));
     flac_tagger=flac_tagger.set_flag('skip',o.argv.skip_tag)

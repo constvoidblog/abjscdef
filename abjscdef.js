@@ -22,7 +22,10 @@ var abjscdef_logger={
 };
 
 var o=opts.generate_opts(argv.get_command_line_args());
-
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    // application specific logging, throwing an error, or other logic here
+  });
 discid.process_cd(o)
     .then((cd)=>{ return o.set_rip_cache(abjscdef_logger,cd); })
     .then((ok)=>{        

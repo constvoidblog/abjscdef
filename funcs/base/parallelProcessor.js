@@ -9,7 +9,7 @@ class ParallelProcessor {
         this.cb_activate=[];
         this.cb_process_track=[];
         this.cb_process_backlog=[]; 
-        this.activation_verb='transcoder controller';       
+        this.activation_verb='controller';       
     }
 
     append_cb(cb_array,cb){
@@ -29,6 +29,7 @@ class ParallelProcessor {
             var successes=0;
             var cb_count=cb_array.length;
             cb_array.forEach((cb)=>{
+                this.log.log(`exec function: ${cb}`);                
                 cb(t,input_obj)
                     .then((ok)=>{
                         successes=successes+1;
@@ -56,9 +57,6 @@ class ParallelProcessor {
         switch(event_verb.toLowerCase()) {  
         case 'activate':
             this.cb_activate.push(cb);
-            this.log.log(`Adding function ${cb}`);
-            this.log.log(`${this.cb_activate}`);
-        
             break;
 
         case 'process':

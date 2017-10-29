@@ -24,7 +24,7 @@ module.exports.generate_transcoder=function (o) {
         p=p.on('activate','', (verb,cd)          =>  {                
                 o.flac_transcoder.activate(`${verb} flac`,cd);
              })
-            .on('process','track',(idx,input) =>  { o.flac_transcoder.process_track(idx,input); })
+            .on('process','track',(idx,input) =>  { return o.flac_transcoder.process_track(idx,input); })
             .on('process','backlog',(idx,input)=> { o.flac_transcoder.process_backlog(idx,input); });        
     }    
     return p;

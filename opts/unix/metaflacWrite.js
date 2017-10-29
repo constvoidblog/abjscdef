@@ -21,11 +21,11 @@ module.exports.tag_file = function (log,o,cd,t) {
         //log.log(`track = ${t}`);          //DBG
         let tag_file=o.generate_flac_tag_filename(t.idx);
         //log.log(`tag file=${tag_file}`);  //DBG
-        let track_count=cd.tracks.length-1;
+        let track_count=cd.tracks.length-2;
         let tag_contents=`TITLE=${t.track_title}
 ALBUM=${cd.album}
 TRACKNUMBER=${t.idx}
-ARTIST=${cd.artist}ks
+ARTIST=${cd.artist}
 DATE=${cd.release_date}
 BARCODE=${cd.barcode}
 ASIN=${cd.asin}
