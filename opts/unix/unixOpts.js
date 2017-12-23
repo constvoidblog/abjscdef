@@ -1,5 +1,6 @@
 const os = require('os');
 const path = require ('path');
+const sanitize=require('sanitize-filename');
 
 const BaseOptions = require(__app+'opts/baseOpts');
 const { ExecUnixCommand } = require(__app+'opts/unix/unixCmds');
@@ -60,7 +61,7 @@ class UnixOptions extends BaseOptions {
             //this.cmd_get_cd_data.exec(['-J','-Q','-g','-H','-D',`${this.path_cdrom}`], (code,stdout,stderr) => {
             this.cmd_get_cd_data.exec(log,['-QgJN','-v','catalog,toc,titles','-D',`${this.path_cdrom}`], (code,stdout,stderr) => {                    
                 if (code==0) {
-                    var cd=icedaxParse.parse_icedax(stderr);
+                    var cd=icedaxParse.parse_icedax(stderr,log);
                     resolve(cd);
                 }
                 else {
@@ -220,7 +221,8 @@ class UnixOptions extends BaseOptions {
     get_track_filename(cd,track_idx,transcode_fmt) {
         var track=cd.tracks[track_idx];
         var track_str=this.padStart(track.idx.toString(),2,'0');
-        return (`${track_str}. ${track.track_title}.${transcode_fmt}`);
+        var track_title=sanitize(track.track_title);
+        return (`${track_str}. ${track_title}.${transcode_fmt}`);
     }
 
     transcode_flac(log,cd,track_num,input,transcode_output) {

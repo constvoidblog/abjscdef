@@ -86,23 +86,27 @@ function grab_first_token(l) {
 }
 
 //Parse icedax cd nfo output
-module.exports.parse_icedax = function (i) {    
+module.exports.parse_icedax = function (i,log) { 
+    //log.log('Parsing icedax output');
     var i_lst=i.split(/[\r\n]+/);
     var cd=new AudioCompactDisc();
     
     i_lst.forEach((l)=>{
         var tok=grab_first_token(l);
+        tok.val=tok.val.replace(/\\'/g,'');
         switch(tok.token) {
         case 'Tracks':
             //Tracks:12 39:40.10
             var d=tok.val.split(' ',1);
             cd.track_count=d[0];
             cd.run_time=d[1];
+            log.log(`${cd.track_count} tracks, ${cd.run_time} run time.`)
             break;
             
         case 'CDINDEX discid':
             //CDINDEX discid: prkkODSX5Zi30lN0og9RXESe4YM-
             cd.discid_cdindex=tok.val.trim();
+            log.log(`disc id is ${cd.discid_cdindex}`);
             break;
 
         case 'CDDB discid':
@@ -131,6 +135,14 @@ module.exports.parse_icedax = function (i) {
             cd.album=parsed_title[1];
             cd.artist=parsed_title[2];
 
+            if (cd.album.length<1) {
+                cd.album='Uknown Album';
+            }
+
+            if (cd.artist.length<1) {
+                cd.artist='Uknown Artist';
+            }
+
             break;
         
         case 'Leadout':
@@ -144,14 +156,16 @@ module.exports.parse_icedax = function (i) {
             break;
 
         case 'Track data':
-            var track_datum=tok.val.match(/\[T(\d+)\]\s+(\d+:\d+\.\d+)\s+title\s+'([^']+)' from/);
-            //console.log(tok.val);
-            //console.log(track_datum);
+            var track_datum=tok.val.match(/\[T(\d+)\]\s+(\d+:\d+\.\d+)\s+title\s+'([^']*)' from/);
+//            console.log(tok.val);
+//            console.log(track_datum);
             var t=new CompactDiscTrack();
-
             t.idx=parseInt(track_datum[1]);
             t.duration=track_datum[2];
             t.track_title=track_datum[3];
+            if (t.track_title.length<1) {
+                t.track_title=`Uknown track ${t.idx}`;
+            }
             cd.add_track(t);
             break;
             

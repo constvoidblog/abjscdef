@@ -29,7 +29,7 @@ module.exports.generate_ripper=function (o) {
                     //not last track
                     ripper.process_track(next_state,next_state)     //Rip this track
                         .then((ok)=>{ripper.cb_start_process(cd);}) //Keep ripping!
-                        .catch((err)=>{this.log.err(err);});                        
+                        .catch((err)=>{ripper.log.err(err);});                        
                 }
             }
         })     
