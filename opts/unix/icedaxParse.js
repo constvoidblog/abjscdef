@@ -135,23 +135,19 @@ module.exports.parse_icedax = function (i,log) {
             cd.album=parsed_title[1];
             cd.artist=parsed_title[2];
 
-            //Uknown CD handling
-            var uknown_cd=true;
+            //Uknown cd handling
+            var known_cd=true;
             if (cd.album.length<1) {
                 cd.album='Uknown Album';
-            }
-            else {
-                uknown_cd=false;
+                known_cd=false;
             }
 
             if (cd.artist.length<1) {
                 cd.artist='Uknown Artist';
+                known_cd=false;
             }
-            else {
-                uknown_cd=false;
-            }
-
-            if (uknown_cd) {
+         
+            if (!known_cd) {
                 log.log('Uknown cd -- will need to pull metadata from online sources.');
             }
 
