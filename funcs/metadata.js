@@ -26,7 +26,8 @@ module.exports.lookup_metadata=function (o) {
                 album_metadata.log.log('skipping...');
             }
         });
-}
+};
+
 class Metadata {
     constructor(o) {
         this.cd=o.cd;
@@ -66,7 +67,8 @@ class Metadata {
             //https://musicbrainz.org/ws/2/discid/prkkODSX5Zi30lN0og9RXESe4YM-?inc=recordings+artists
             
             this.metadata_state.start(this.STATE_CD_METADATA);
-            axios.get(`https://musicbrainz.org/ws/2/discid/${this.cd.discid_cdindex}?inc=recordings+artists`)
+            var cdindex_uri=encodeURIComponent(this.cd.discid_cdindex);
+            axios.get(`https://musicbrainz.org/ws/2/discid/${cdindex_uri}?inc=recordings+artists`)
                 .then(response=> {  
                     this.process_metadata(response.data);
                     this.store_cd(this.cd_state)
@@ -79,7 +81,10 @@ class Metadata {
                         .catch((err)=>{ this.log.err(err);});
                     //console.log(response);
                 })
-                .catch(err=>{this.log.err(err);});
+                .catch(err=>{
+                    this.log.err(`Failed to retreive ${cdindex_uri} metadata`);
+                    this.log.err(err);
+                });
         }
         else {
             this.load(this.cd_state)
@@ -98,7 +103,8 @@ class Metadata {
             //Need to try getting album art
             this.log.log('get album art');
             this.metadata_state.start(this.STATE_CD_ALBUM_ART_ID);   
-            axios.get(`https://coverartarchive.org/release/${this.cd.mb_release_id}`)
+            var release_uri=encodeURIComponent(this.cd.mb_release_id);
+            axios.get(`https://coverartarchive.org/release/${release_uri}`)
                 .then((response)=>{
                     this.cd.metadata.artwork=response.data;
                     this.process_coverart_images(response.data.images);
