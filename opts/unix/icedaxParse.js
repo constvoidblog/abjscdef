@@ -138,12 +138,12 @@ module.exports.parse_icedax = function (i,log) {
             //Uknown cd handling
             var known_cd=true;
             if (cd.album.length<1) {
-                cd.album='Uknown Album';
+                cd.album='Unknown Album';
                 known_cd=false;
             }
 
             if (cd.artist.length<1) {
-                cd.artist='Uknown Artist';
+                cd.artist='Unknown Artist';
                 known_cd=false;
             }
          

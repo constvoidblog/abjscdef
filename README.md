@@ -13,7 +13,7 @@ Insert a CD and convert to FLAC w/full range of metadata tagging.
 ### Current State
 * Cd Ripping: Functioning
 * Metadata Gathering:  
-    * Functioning: Album/Artist/Track/Year Functioning/Album Artwork
+    * Functioning: Album/Artist/Track/Year/Album Artwork
     * Unresolved: Genre     
 * Transcoding: Functioning
 * Tagging: Functioning
