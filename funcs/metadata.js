@@ -83,7 +83,11 @@ class Metadata {
                 })
                 .catch(err=>{
                     this.log.err(`Failed to retreive ${cdindex_uri} metadata`);
+                    if (err.request) {
+                        this.log.err(err.request.statusMessage);
+                    }
                     this.log.err(err);
+                                        
                 });
         }
         else {
@@ -276,7 +280,11 @@ class Metadata {
 
 
     match(comment,field,value,match_score,penalty_score){
-        if(field.toLowerCase()==value.toLowerCase()) {
+        if (field==undefined) {
+            //no match
+            this.log.log(`${comment}: not found in metadata.`);
+        }
+        else if(field.toLowerCase()==value.toLowerCase()) {
             this.score+=match_score;
             this.log.log(`${comment}: ${field}=${value}, add ${match_score}; new score=${this.score}`);
         }
