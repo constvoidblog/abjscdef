@@ -10,6 +10,11 @@ class StateStatus {
         this.states=new Array(this.num_states);
     }
 
+    reset_state(idx) {
+        var state = { state_status: 'unstarted' };
+        this.states[idx]=state;
+    }
+
     init_state() {
         return new Promise((resolve,reject)=> {
             //if rip_state.json, process it 
@@ -20,8 +25,7 @@ class StateStatus {
                         this.log.log(`no ${this.state_basename}, initialize...`);
                                          
                         for (let idx=1; idx<this.num_states; idx++) {
-                            var state = { state_status: 'unstarted' };
-                            this.states[idx]=state;                            
+                            this.reset_state(idx);                         
                         }                        
                         resolve(this.states);
                     }
@@ -33,6 +37,14 @@ class StateStatus {
                 else {
                     this.log.log(`restored state from ${this.state_basename}...`);
                     this.states=JSON.parse(data);
+
+                    //Sanitize state counts
+                    for (var idx=1; idx<=this.num_states; idx++) {
+                        if (this.states[idx]==undefined) {
+                            this.reset_state(idx);
+                        }
+                    }
+                    //console.log(this.states);
                     resolve(true);
                 }
             });
@@ -70,10 +82,12 @@ class StateStatus {
     }
 
     is_incomplete(idx) {
+        //console.log('is incomplete?'+idx+' = '+this.states[idx]);
         return this.states[idx].state_status!='completed';
     }
 
     get_next_incomplete_state() {
+        //console.log('num states'+this.num_states);
         for (var idx=1; idx<=this.num_states; idx++) {
             if (this.is_incomplete(idx)) {
                 return idx;

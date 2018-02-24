@@ -66,6 +66,14 @@ class TrackProcessor {
         this.cb_generate_output_track_file=this.noop_generate;
     }
 
+/**
+ * Backlog Detail
+ *    Ripping starts at the next incomplete track
+ *    if incomplete track > 1, then backlog is 1..last complete track
+ *    ripping backlog processing should consider iterating across each track, and passing on a process backlog event in parallel
+ *    non-ripping backlog processing should start_track and propogate down as usual
+ *    how to test? should there be a --test option???
+ */
     default_start_process(cd){
         //cache cd
         this.cd=cd;

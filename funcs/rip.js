@@ -29,7 +29,9 @@ module.exports.generate_ripper=function (o) {
                     //not last track
                     ripper.process_track(next_state,next_state)     //Rip this track
                         .then((ok)=>{ripper.cb_start_process(cd);}) //Keep ripping!
-                        .catch((err)=>{ripper.log.err(err);});                        
+                        .catch((err)=>{
+                            ripper.log.err(`Could not process track ${next_state}`);
+                            ripper.log.err(err);});                        
                 }
             }
         })     
