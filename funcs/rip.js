@@ -33,6 +33,9 @@ module.exports.generate_ripper=function (o) {
                             ripper.log.err(`Could not process track ${next_state}`);
                             ripper.log.err(err);});                        
                 }
+                else {
+                    ripper.log.log('all tracks ripped.');
+                }
             }
         })     
         .on('generate','output-track-file',(idx)=>{                        
