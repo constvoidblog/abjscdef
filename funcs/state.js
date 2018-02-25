@@ -24,9 +24,10 @@ class StateStatus {
                         //otherwise, default 
                         this.log.log(`no ${this.state_basename}, initialize...`);
                                          
-                        for (let idx=1; idx<this.num_states; idx++) {
+                        for (let idx=1; idx<=this.num_states; idx++) {
                             this.reset_state(idx);                         
-                        }                        
+                        }                   
+                        //console.log('made '+this.states.length)
                         resolve(this.states);
                     }
                     else {
@@ -44,7 +45,7 @@ class StateStatus {
                             this.reset_state(idx);
                         }
                     }
-                    //console.log(this.states);
+                    
                     resolve(true);
                 }
             });
@@ -86,6 +87,14 @@ class StateStatus {
         return this.states[idx].state_status!='completed';
     }
 
+    is_complete(idx) {
+        //console.log('is complete?'+idx+' = '+this.states[idx]);
+        //if (this.states[idx]==undefined){ 
+        //    console.log(this.states);
+        //}
+        return this.states[idx].state_status=='completed';
+    }
+
     get_next_incomplete_state() {
         //console.log('num states'+this.num_states);
         for (var idx=1; idx<=this.num_states; idx++) {
@@ -94,6 +103,19 @@ class StateStatus {
             }
         }
         return 0;
+    }
+
+    //return the last state that is complete
+    get_last_complete_state() {
+        //console.log('num states'+this.num_states);
+        var last_complete=0;
+        for (var idx=1; idx<=this.num_states; idx++) {
+            if (this.is_incomplete(idx)) {
+                return last_complete;
+            }
+            last_complete=idx;
+        }
+        return last_complete;
     }
 }
 

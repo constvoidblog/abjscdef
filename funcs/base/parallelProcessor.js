@@ -9,7 +9,13 @@ class ParallelProcessor {
         this.cb_activate=[];
         this.cb_process_track=[];
         this.cb_process_backlog=[]; 
-        this.activation_verb='controller';       
+        this.activation_verb='controller';  
+        this.prior_processor=null;     
+    }
+
+    //shares w/TrackProcessor
+    set_prior_processor(track_processor) {
+        this.prior_processor=track_processor;
     }
 
     append_cb(cb_array,cb){
@@ -49,8 +55,8 @@ class ParallelProcessor {
         
     }
 
-    process_backlog(max_track) {
-        this.cb_process_backlog.forEach((cb)=>{cb(max_track);});        
+    process_backlog(t,input_obj) {
+        this.cb_process_backlog.forEach((cb)=>{cb(t,input_obj);});        
     }
     
     on(event_verb,event_noun,cb){

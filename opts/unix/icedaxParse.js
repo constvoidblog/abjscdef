@@ -165,8 +165,11 @@ module.exports.parse_icedax = function (i,log) {
 
         case 'Track data':
             var track_datum=tok.val.match(/\[T(\d+)\]\s+(\d+:\d+\.\d+)\s+title\s+'([^']*)' from/);
-//            console.log(tok.val);
-//            console.log(track_datum);
+            //console.log(tok.val);
+            //console.log(track_datum);
+            if (track_datum==undefined) {
+                track_datum=tok.val.match(/\[T(\d+)\]\s+(\d+:\d+\.\d+)(.*)/);
+            }            
             var t=new CompactDiscTrack();
             t.idx=parseInt(track_datum[1]);
             t.duration=track_datum[2];

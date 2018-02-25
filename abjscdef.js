@@ -35,6 +35,7 @@ discid.process_cd(o)
         o.transcoder=transcode.generate_transcoder(o);        
         o.ripper=rip.generate_ripper(o);
         
+        o.flac_transcoder.set_prior_processor(o.ripper);
         /*
         o.flac_stasher=null;
         o.flac_done=null; //special--only goes to next after last flac file done
@@ -47,6 +48,6 @@ discid.process_cd(o)
             //         default: compress, archive, remove wav
         */
         o.ripper.activate('rip',o.cd);
-        metadata.lookup_metadata(o)
+        metadata.lookup_metadata(o);
     });
 
